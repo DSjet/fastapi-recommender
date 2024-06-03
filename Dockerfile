@@ -1,4 +1,4 @@
-FROM python:3.8.2-stretch
+FROM python:3.8.2
 
 # Maintainer info
 LABEL maintainer="teddyantonius7@gmail.com"
@@ -18,6 +18,9 @@ RUN pip install -r requirements.txt
 
 # Copy every file in the source folder to the created working directory
 COPY  . .
+
+# Expose the port the app runs on
+EXPOSE 5000
 
 # Run the python application
 CMD ["python", "main.py"]

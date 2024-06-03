@@ -1,5 +1,6 @@
 from fastapi import FastAPI
 from tensorflow.keras.models import load_model
+from fastapi.middleware.cors import CORSMiddleware
 from tensorflow.keras.utils import get_file 
 from tensorflow.keras.utils import load_img 
 from tensorflow.keras.utils import img_to_array
@@ -13,7 +14,7 @@ from uvicorn import run
 import os
 
 app = FastAPI()
-model_dir = "/model/food-vision-model.h5"
+model_dir = "model/food-vision-model.h5"
 model = load_model(model_dir)
 
 class_predictions = array([
@@ -135,10 +136,6 @@ app.add_middleware(
 @app.get("/")
 async def root():
     return {"message": "Welcome to the Wander Rankings API!"}
-    
-if __name__ == "__main__":
-	port = int(os.environ.get('PORT', 5000))
-	run(app, host="0.0.0.0", port=port)
  
 @app.post("/net/image/prediction/")
 async def get_net_image_prediction(image_link: str = ""):
@@ -167,3 +164,8 @@ async def get_net_image_prediction(image_link: str = ""):
         "model-prediction": class_prediction,
         "model-prediction-confidence-score": model_score
     }
+
+
+if __name__ == "__main__":
+	port = int(os.environ.get('PORT', 5000))
+	run(app, host="0.0.0.0", port=port)
