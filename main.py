@@ -10,116 +10,25 @@ from numpy import argmax
 from numpy import max
 from numpy import array
 from json import dumps
+from typing import List
 from uvicorn import run
+from utils import load_model
 import os
 
 app = FastAPI()
-model_dir = "model/food-vision-model.h5"
-model = load_model(model_dir)
+model = load_model("model/food-vision-model.h5")
 
-class_predictions = array([
-    'apple pie',
-    'baby back ribs',
-    'baklava',
-    'beef carpaccio',
-    'beef tartare',
-    'beet salad',
-    'beignets',
-    'bibimbap',
-    'bread pudding',
-    'breakfast burrito',
-    'bruschetta',
-    'caesar salad',
-    'cannoli',
-    'caprese salad',
-    'carrot cake',
-    'ceviche',
-    'cheesecake',
-    'cheese plate',
-    'chicken curry',
-    'chicken quesadilla',
-    'chicken wings',
-    'chocolate cake',
-    'chocolate mousse',
-    'churros',
-    'clam chowder',
-    'club sandwich',
-    'crab cakes',
-    'creme brulee',
-    'croque madame',
-    'cup cakes',
-    'deviled eggs',
-    'donuts',
-    'dumplings',
-    'edamame',
-    'eggs benedict',
-    'escargots',
-    'falafel',
-    'filet mignon',
-    'fish and chips',
-    'foie gras',
-    'french fries',
-    'french onion soup',
-    'french toast',
-    'fried calamari',
-    'fried rice',
-    'frozen yogurt',
-    'garlic bread',
-    'gnocchi',
-    'greek salad',
-    'grilled cheese sandwich',
-    'grilled salmon',
-    'guacamole',
-    'gyoza',
-    'hamburger',
-    'hot and sour soup',
-    'hot dog',
-    'huevos rancheros',
-    'hummus',
-    'ice cream',
-    'lasagna',
-    'lobster bisque',
-    'lobster roll sandwich',
-    'macaroni and cheese',
-    'macarons',
-    'miso soup',
-    'mussels',
-    'nachos',
-    'omelette',
-    'onion rings',
-    'oysters',
-    'pad thai',
-    'paella',
-    'pancakes',
-    'panna cotta',
-    'peking duck',
-    'pho',
-    'pizza',
-    'pork chop',
-    'poutine',
-    'prime rib',
-    'pulled pork sandwich',
-    'ramen',
-    'ravioli',
-    'red velvet cake',
-    'risotto',
-    'samosa',
-    'sashimi',
-    'scallops',
-    'seaweed salad',
-    'shrimp and grits',
-    'spaghetti bolognese',
-    'spaghetti carbonara',
-    'spring rolls',
-    'steak',
-    'strawberry shortcake',
-    'sushi',
-    'tacos',
-    'takoyaki',
-    'tiramisu',
-    'tuna tartare',
-    'waffles'
-])
+class UserPreferences(BaseModel):
+    location: List[float]
+    preferences: List[str]
+    
+class Hotel(BaseModel):
+    name: str
+    location: List[float]
+    preferences: List[str]
+
+class HotelRecommendation(BaseModel):
+    hotel: List[Hotel]
 
 origins = ["*"]
 methods = ["*"]
@@ -138,7 +47,7 @@ async def root():
     return {"message": "Welcome to the Wander Rankings API!"}
  
 @app.post("/net/image/prediction/")
-async def get_net_image_prediction(image_link: str = ""):
+async def get_net_image_prediction():
     if image_link == "":
         return {"message": "No image link provided"}
     
@@ -167,5 +76,5 @@ async def get_net_image_prediction(image_link: str = ""):
 
 
 if __name__ == "__main__":
-	port = int(os.environ.get('PORT', 5000))
+	port = int(os.environ.get('PORT', 5050))
 	run(app, host="0.0.0.0", port=port)
