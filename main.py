@@ -15,17 +15,19 @@ import os
 # with open('/content/merged_ta_data.json', 'r') as file:
 #     ta_data = json.load(file)
 
-with open('/dataset/merged_hotel_data.json', 'r') as file:
+with open('dataset/merged_hotel_data.json', 'r') as file:
     hotel_data = json.load(file)
     
-user_data = pd.read_csv('/dataset/user_with_preferences.csv')
+user_data = pd.read_csv('dataset/user_with_preferences.csv')
 
-hotel_data['geometry'] = hotel_data['geometry'].apply(eval)
-hotel_data['lat'] = hotel_data['geometry'].apply(lambda x: x['location']['lat'])
-hotel_data['lng'] = hotel_data['geometry'].apply(lambda x: x['location']['lng'])
+ratings = [hotel['rating'] for hotel in hotel_data]
+ratings_array = [[rating] for rating in ratings]
 
 scaler = StandardScaler()
-hotel_data[['rating']] = scaler.fit_transform(hotel_data[['rating']])
+scaled_ratings = scaler.fit_transform(ratings_array)
+
+for i, hotel in enumerate(hotel_data):
+    hotel['scaled_rating'] = scaled_ratings[i][0]
 
 mlb = MultiLabelBinarizer()
 user_data['Preferences'] = user_data['Preferences'].apply(eval)  # Convert string to list
@@ -92,7 +94,7 @@ class RankingModel(tfrs.Model):
         predictions = self(features)
         return self.task(labels=labels, predictions=predictions)
 
-with open('/model/model_architecture.json', 'r') as f:
+with open('model/model_architecture.json', 'r') as f:
     model_json = f.read()
     model = tf.keras.models.model_from_json(model_json, custom_objects={'RankingModel': RankingModel})
 
