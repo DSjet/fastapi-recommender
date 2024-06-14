@@ -8,18 +8,24 @@ import tensorflow as tf
 import numpy as np
 import tensorflow_recommenders as tfrs
 import uvicorn
+import json
 import os
 
 # Load and preprocess data
-hotel_depok = pd.read_csv('/path/to/merged_300_datahotel.csv')
-user_data = pd.read_csv('/path/to/user_with_preferences.csv')
+# with open('/content/merged_ta_data.json', 'r') as file:
+#     ta_data = json.load(file)
 
-hotel_depok['geometry'] = hotel_depok['geometry'].apply(eval)
-hotel_depok['lat'] = hotel_depok['geometry'].apply(lambda x: x['location']['lat'])
-hotel_depok['lng'] = hotel_depok['geometry'].apply(lambda x: x['location']['lng'])
+with open('/dataset/merged_hotel_data.json', 'r') as file:
+    hotel_data = json.load(file)
+    
+user_data = pd.read_csv('/dataset/user_with_preferences.csv')
+
+hotel_data['geometry'] = hotel_data['geometry'].apply(eval)
+hotel_data['lat'] = hotel_data['geometry'].apply(lambda x: x['location']['lat'])
+hotel_data['lng'] = hotel_data['geometry'].apply(lambda x: x['location']['lng'])
 
 scaler = StandardScaler()
-hotel_depok[['rating']] = scaler.fit_transform(hotel_depok[['rating']])
+hotel_data[['rating']] = scaler.fit_transform(hotel_data[['rating']])
 
 mlb = MultiLabelBinarizer()
 user_data['Preferences'] = user_data['Preferences'].apply(eval)  # Convert string to list
@@ -52,8 +58,8 @@ class RankingModel(tfrs.Model):
 
         # Hotel embeddings
         self.hotel_embeddings = tf.keras.Sequential([
-            tf.keras.layers.StringLookup(vocabulary=hotel_depok["name"].unique(), mask_token=None),
-            tf.keras.layers.Embedding(len(hotel_depok["name"].unique()) + 1, embedding_dimension)
+            tf.keras.layers.StringLookup(vocabulary=hotel_data["name"].unique(), mask_token=None),
+            tf.keras.layers.Embedding(len(hotel_data["name"].unique()) + 1, embedding_dimension)
         ])
 
         # User preference embeddings
@@ -86,7 +92,7 @@ class RankingModel(tfrs.Model):
         predictions = self(features)
         return self.task(labels=labels, predictions=predictions)
 
-with open('model_architecture.json', 'r') as f:
+with open('/model/model_architecture.json', 'r') as f:
     model_json = f.read()
     model = tf.keras.models.model_from_json(model_json, custom_objects={'RankingModel': RankingModel})
 
@@ -103,19 +109,19 @@ model.load_weights('model/model_weights_stdrecommend.h5')
 
 def rank_hotels(user_id, top_n, tour_interests):
     middle_point = calculate_middle_point(tour_interests)
-    hotel_depok['distance'] = hotel_depok.apply(lambda row: haversine(middle_point['lat'], middle_point['lng'], row['lat'], row['lng']), axis=1)
-    hotel_depok['distance_normalized'] = scaler.fit_transform(hotel_depok[['distance']])
+    hotel_data['distance'] = hotel_data.apply(lambda row: haversine(middle_point['lat'], middle_point['lng'], row['lat'], row['lng']), axis=1)
+    hotel_data['distance_normalized'] = scaler.fit_transform(hotel_data[['distance']])
     
     user_preferences = user_data.loc[user_data['User_Id'] == user_id, mlb.classes_].values.flatten()
     hotel_data = {
-        "hotel_name": tf.constant(hotel_depok["name"].tolist()),
-        "distance_normalized": tf.constant(hotel_depok["distance_normalized"].tolist(), dtype=tf.float32),
-        "rating": tf.constant(hotel_depok["rating"].tolist(), dtype=tf.float32),
-        "preferences": tf.constant([user_preferences] * len(hotel_depok), dtype=tf.float32)
+        "hotel_name": tf.constant(hotel_data["name"].tolist()),
+        "distance_normalized": tf.constant(hotel_data["distance_normalized"].tolist(), dtype=tf.float32),
+        "rating": tf.constant(hotel_data["rating"].tolist(), dtype=tf.float32),
+        "preferences": tf.constant([user_preferences] * len(hotel_data), dtype=tf.float32)
     }
     predictions = model(hotel_data)
-    hotel_depok["predicted_ranking_score"] = predictions.numpy().flatten()
-    ranked_hotels = hotel_depok.sort_values(by="predicted_ranking_score", ascending=False).head(top_n)
+    hotel_data["predicted_ranking_score"] = predictions.numpy().flatten()
+    ranked_hotels = hotel_data.sort_values(by="predicted_ranking_score", ascending=False).head(top_n)
     return ranked_hotels[["name", "formatted_address", "distance", "rating", "predicted_ranking_score", "photos"]]
 
 class RankRequestModel(BaseModel):
