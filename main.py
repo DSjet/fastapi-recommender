@@ -179,7 +179,7 @@ def rank_hotels(user_id, top_n, tour_interests):
         ranked_hotels["rating"] = ranked_hotels["rating"].apply(replace_invalid_values)
         ranked_hotels["predicted_ranking_score"] = ranked_hotels["predicted_ranking_score"].apply(replace_invalid_values)
         
-        json_str = ranked_hotels[["name", "formatted_address", "distance", "rating", "predicted_ranking_score", "photos"]].to_json(orient="records", force_ascii=False)
+        json_str = ranked_hotels[["name", "formatted_address", "distance", "rating", "predicted_ranking_score", "place_id"]].to_json(orient="records", force_ascii=False)
 
         # Use json.dumps to ensure correct handling of backslashes
         json_str_fixed = json.dumps(json.loads(json_str), ensure_ascii=False)
@@ -232,5 +232,5 @@ async def root():
     return {"message": "Welcome to the Wander Rankings API!"}
 
 if __name__ == "__main__":
-    port = int(os.environ.get('PORT', 8080))
+    port = int(os.environ.get("PORT", 8080))
     uvicorn.run(app, host="0.0.0.0", port=port)
