@@ -20,7 +20,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY . .
 
 # Expose the port the app runs on
-EXPOSE 5050
+EXPOSE 8080
 
 # Run the python application using uvicorn
 CMD ["python", "main.py"]
