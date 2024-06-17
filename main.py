@@ -83,8 +83,6 @@ scaled_distances = scaler.fit_transform(distances.reshape(-1, 1))
 
 hotel['distance_normalized'] = scaled_distances
 
-print(hotel.head())
-
 # Define the ranking model
 class RankingModel(tfrs.Model):
     def __init__(self):

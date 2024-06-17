@@ -22,5 +22,9 @@ COPY . .
 # Expose the port the app runs on
 EXPOSE 8080
 
-# Run the python application using uvicorn
-CMD ["python", "main.py"]
+
+# Define environment variable
+ENV PORT 8080
+
+# Run app.py when the container launches
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8080"]
