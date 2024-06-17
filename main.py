@@ -234,5 +234,5 @@ async def root():
     return {"message": "Welcome to the Wander Rankings API!"}
 
 if __name__ == "__main__":
-    port = int(os.environ.get('PORT', 5050))
+    port = int(os.environ.get('PORT', 8080))
     uvicorn.run(app, host="0.0.0.0", port=port)
